@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Platform, Text, View, StyleSheet, Button } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import GetLocation from 'react-native-get-location';
 
 import * as Location from 'expo-location';
 
@@ -13,7 +14,9 @@ export default function App() {
   let [startDisabled, setStartDisabled] = useState(false)
   let [stopDisabled, setStopDisabled] = useState(true)
   let [currentLocation, setCurrentLocation] = useState(null)
-  let [positionsList, setPositionsList] = useState(null)
+  let [markers,setMarkers] = useState(null)
+  let [route, setRoute] = useState(null)
+  //let [positionsList, setPositionsList] = useState(null)
 
 
   useEffect(() => {
@@ -27,7 +30,6 @@ export default function App() {
 
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
-
     })();
   }, [access]);
 
@@ -51,8 +53,10 @@ export default function App() {
     setStopDisabled(stopDisabled)
     positions = []
     setPositions(positions)
-    positionsList = []
-    setPositionsList(positionsList)
+    markers = null
+    setMarkers(markers)
+    route = null
+    setRoute(route)
   }
 
   setTimeout(() => {
@@ -60,7 +64,7 @@ export default function App() {
       access = 1 - access
       setAccess(access)
     }
-  }, 2000)
+  }, 5000)
 
 
   const storeLocations = () => {
@@ -76,18 +80,37 @@ export default function App() {
       longitudeDelta: 0.0005,
     }
     setCurrentLocation(currentLocation)
-    positionsList = positions.map((position, key) => {
-      if(position && position.coords){
-      return <Marker
-        key = {key}
-        coordinate={{ latitude: position.coords.latitude, longitude: position.coords.longitude }}
-        pinColor={"purple"}
-        title='Boundary'
-        description='Boundary'
-      />
-      }
+    markers = positions.map((position,key)=>{
+      if(position && position.coords)
+        return <Marker
+          key = {key}
+          coordinate={{ latitude: position.coords.latitude, longitude: position.coords.longitude }}
+          pinColor={"purple"}
+          title='Boundary'
+          description='Boundary'
+        />
     })
-    setPositionsList(positionsList)
+    setMarkers(markers)
+    route = <Polyline
+      coordinates={positions.map((position, key) => {
+        if (position && position.coords)
+          return { latitude: position.coords.latitude, longitude: position.coords.longitude }
+      })}
+      strokeColor='#000'
+      strokeColors={['#7F0000']}
+      strokeWidth={6}
+    />
+    setRoute(route)
+    // positionsList = positions.map((position, key) => {
+    //   if(position && position.coords){
+    //   // return <Marker
+    //   //   key = {key}
+    //   //   coordinate={{ latitude: position.coords.latitude, longitude: position.coords.longitude }}
+    //   //   pinColor={"purple"}
+    //   //   title='Boundary'
+    //   //   description='Boundary'
+    //   }
+    // })
   }
 
   return (
@@ -99,7 +122,8 @@ export default function App() {
         style={styles.map}
         region={currentLocation}
       >
-        {positionsList}
+        {markers}
+        {route}
       </MapView>
     </View>
   );
